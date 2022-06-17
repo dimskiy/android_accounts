@@ -2,7 +2,6 @@ package `in`.windrunner.account_manager.impl
 
 import `in`.windrunner.account_manager.SingleAccountManager
 import `in`.windrunner.account_manager.TokenRequestApi
-import `in`.windrunner.account_manager.AuthError
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.util.Log
@@ -50,15 +49,11 @@ internal class UsernamePasswordAccountManager(
             val password = accountManager.getPassword(account)
             val token = getApiToken(account.name, password)
             saveAccount(token = token)
-        } ?: throw AuthError.AndroidError("No account found to refresh the token")
+        } ?: throw IllegalStateException("No account found to refresh the token")
     }
 
-    private suspend fun getApiToken(userName: String, password: String): String = try {
+    private suspend fun getApiToken(userName: String, password: String): String =
         api.getToken(userName, password)
-    } catch (e: Throwable) {
-        Log.w(SingleAccountManager.LOG_TAG, e)
-        throw AuthError.ServerAuthError(e.message)
-    }
 
     private suspend fun saveAccount(
         newAccount: Account? = null,
@@ -77,7 +72,7 @@ internal class UsernamePasswordAccountManager(
             }
         } catch (e: Throwable) {
             Log.w(SingleAccountManager.LOG_TAG, e)
-            throw AuthError.AndroidError(e.message)
+            throw IllegalStateException(e.message)
         }
     }
 
